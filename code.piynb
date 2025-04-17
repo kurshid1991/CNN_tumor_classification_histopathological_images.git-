@@ -1,1 +1,111 @@
+'''
+If you wish to use kaggle API to download dataset directly:
 
+1.	Obtain Kaggle API credentials:
+o	Go to Kaggle Account Settings.
+o	Scroll down to API and click Create New Token. This will download a file named kaggle.json.
+2.	Upload kaggle.json to Google Colab:
+o	Run the following commands in Colab to install Kaggle API and set up credentials:
+python
+CopyEdit
+!pip install kaggle
+from google.colab import files
+files.upload()  # Upload kaggle.json here
+!mkdir ~/.kaggle
+!cp kaggle.json ~/.kaggle/
+!chmod 600 ~/.kaggle/kaggle.json
+'''
+#### working with mounted google drive
+from google.colab import drive
+drive.mount('/content/drive')
+
+%cd /content/drive/MyDrive/Projects/CNN_tumor_region_classification/BreaKHis_v1/BreaKHis_v1/histology_slides/breast
+!ls
+
+import os
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.utils import to_categorical
+
+import os
+
+def get_folder_structure(path, output_file):
+    # First, write the base path itself
+    output_file.write(path + '\n')
+
+    # Walk through the directory structure and save only directories
+    for root, dirs, files in os.walk(path):
+        for dir_name in dirs:
+            output_file.write(os.path.join(root, dir_name) + '\n')
+
+# Define the output file path
+output_file_path = '/content/drive/MyDrive/Projects/CNN_tumor_region_classification/BreaKHis_v1/BreaKHis_v1/folder_structure.txt'
+
+# Open file to save the structure
+with open(output_file_path, 'w') as f:
+    get_folder_structure('/content/drive/MyDrive/Projects/CNN_tumor_region_classification/BreaKHis_v1/BreaKHis_v1/histology_slides/breast', output_file=f)
+
+
+import os
+import matplotlib.pyplot as plt
+from PIL import Image
+
+def get_all_image_paths(folder_paths, extensions={'.png', '.jpg', '.jpeg', '.tiff'}, verbose=False):
+    image_paths = []
+    for folder_path in folder_paths:
+        if verbose:
+            print(f"Searching in: {folder_path}")
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                if any(file.lower().endswith(ext) for ext in extensions):
+                    full_path = os.path.join(root, file)
+                    image_paths.append(full_path)
+                    if verbose:
+                        print(f"  Found: {full_path}")
+    if verbose:
+        print(f"Total images found: {len(image_paths)}")
+    return image_paths
+
+def display_images_from_folders(folder_paths, cols=4, figsize=(16, 12), verbose=False):
+    image_paths = get_all_image_paths(folder_paths, verbose=verbose)
+
+    if not image_paths:
+        print("No images found in the specified folders.")
+        return
+
+    images = []
+    for path in image_paths:
+        try:
+            img = Image.open(path)
+            images.append(img)
+            if verbose:
+                print(f"Loaded: {path}")
+        except Exception as e:
+            print(f"Failed to open {path}: {e}")
+
+    rows = (len(images) + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=figsize)
+    axes = axes.flatten()
+
+    for i in range(len(axes)):
+        ax = axes[i]
+        if i < len(images):
+            ax.imshow(images[i])
+            ax.set_title(os.path.basename(image_paths[i]), fontsize=8)
+            ax.axis('off')
+        else:
+            ax.axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+# 🔍 Example usage:
+folders_to_search = [
+    "/content/drive/MyDrive/Projects/CNN_tumor_region_classification/BreaKHis_v1/BreaKHis_v1/histology_slides/breast/benign",
+    "/content/drive/MyDrive/Projects/CNN_tumor_region_classification/BreaKHis_v1/BreaKHis_v1/histology_slides/breast/malignant"
+]
+
+# ✅ Turn verbose on/off
+display_images_from_folders(folders_to_search, verbose=True)
